@@ -1,27 +1,35 @@
 version: 0.2
+
 phases:
   pre_build:
     commands:
       - echo Logging in to Amazon ECR...
-      - echo $CODEBUILD_SOURCE_VERSION
-      # - $(aws ecr get-login --region $AWS_DEFAULT_REGION --no-include-email)
-      # - REPOSITORY_URI=<<YOUR-REPO-URI>>
-      # - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
-      # - IMAGE_TAG=build-$(echo $CODEBUILD_BUILD_ID | awk -F":" '{print $2}')
+      # Log in to the Amazon ECR registry
+      - $(aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin 080523365657.dkr.ecr.ap-southeast-2.amazonaws.com)
+      # Define variables for the image URI and tags
+      - REPOSITORY_URI=080523365657.dkr.ecr.ap-southeast-2.amazonaws.com/evt/xtend
+      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - IMAGE_TAG=build-$(echo $CODEBUILD_BUILD_ID | awk -F":" '{print $2}')
+
   build:
     commands:
       - echo Build started on `date`
       - echo Building the Docker image...
-      - docker build -t 080523365657.dkr.ecr.ap-southeast-2.amazonaws.com/evt/xtend:nginx .
-      # - docker 
-#   post_build:
-#     commands:
-#       - echo Build completed on `date`
-#       - echo Pushing the Docker images...
-#       - docker push $REPOSITORY_URI:latest
-#       - docker push $REPOSITORY_URI:$IMAGE_TAG
-#       - echo Writing image definitions file...
-#       - printf '{"AWSEBDockerrunVersion":"1","Image":{"Name":"%s","Update":"true"},"Ports":[{"ContainerPort":80,"HostPort":80}]}' $REPOSITORY_URI:$IMAGE_TAG > Dockerrun.aws.json
-#       - cat Dockerrun.aws.json
-# artifacts:
-#   files: Dockerrun.aws.json
+      # Build the Docker image with the tag and repository URI
+      - docker build -t $REPOSITORY_URI:latest -t $REPOSITORY_URI:$IMAGE_TAG .
+
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Pushing the Docker images to ECR...
+      # Push both the 'latest' tag and the commit-specific tag to ECR
+      - docker push $REPOSITORY_URI:latest
+      - docker push $REPOSITORY_URI:$IMAGE_TAG
+      - echo Writing image definitions file for Elastic Beanstalk deployment...
+      # Generate Dockerrun.aws.json for Elastic Beanstalk if needed
+      - printf '{"AWSEBDockerrunVersion":"1","Image":{"Name":"%s","Update":"true"},"Ports":[{"ContainerPort":80,"HostPort":80}]}' $REPOSITORY_URI:$IMAGE_TAG > Dockerrun.aws.json
+      - cat Dockerrun.aws.json
+
+artifacts:
+  files:
+    - Dockerrun.aws.json
