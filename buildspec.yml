@@ -4,6 +4,7 @@ phases:
   pre_build:
     commands:
       - echo Logging in to Amazon ECR...
+      - aws sts get-caller-identity 
       # Log in to the Amazon ECR registry
       - $(aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin 080523365657.dkr.ecr.ap-southeast-2.amazonaws.com)
       # Define variables for the image URI and tags
