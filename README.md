@@ -73,7 +73,7 @@ Elastic Beanstalk is a great choice if you want to deploy Docker apps quickly wi
 #### 2. Dockerfile
 - Create the `Dockerfile` for building a custom application container.
 
-```json
+```dockerfile
 FROM nginx:latest
 RUN  echo "hello Devops" > /usr/share/nginx/html/index.html
 COPY testfile.txt /usr/share/nginx/html/testfile.txt
@@ -84,7 +84,7 @@ EXPOSE 80
 
 #### 3. docker-compose
 - Create `docker-compose.yml` to define multi-container applications and cron
-```json
+```yaml
 version: "3.3"
 services:
   # webapp
